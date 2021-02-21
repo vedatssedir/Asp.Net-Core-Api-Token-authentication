@@ -1,0 +1,13 @@
+﻿# Default ignored files
+/shelf/
+/workspace.xml
+# Rider ignored files
+/projectSettingsUpdater.xml
+/contentModel.xml
+/modules.xml
+/.idea.ApiWithToken.iml
+# Datasource local storage ignored files
+/../../../../../../../../../:\Users\Vedat\source\repos\ApiWithToken\.idea\.idea.ApiWithToken\.idea/dataSources/
+/dataSources.local.xml
+# Editor-based HTTP Client requests
+/httpRequests/

@@ -1,0 +1,193 @@
+﻿
+@{
+    ViewData["Title"] = "Spa";
+}
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Üye Formu</h2>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label">Adınız</label>
+                <div class="col-md-9">
+                    <input type="text" class="form-control" id="Name" />
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label">Soyadınız</label>
+                <div class="col-md-9">
+                    <input type="text" class="form-control" id="Surname" />
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label">Email</label>
+                <div class="col-md-9">
+                    <input type="text" class="form-control" id="Email" />
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label">Şifreniz</label>
+                <div class="col-md-9">
+                    <input type="text" class="form-control" id="Sifre" />
+                </div>
+            </div>
+            <button class="btn btn-primary" id="btnSave">Kullanıcı Kaydet</button>
+
+        </div>
+        <div class="col-md-6">
+            <div id="userDiv" style="display: none;">
+                <h2>Kullanıcı Listesi</h2>
+                <table class="table table-bordered table-sm">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userData"></tbody>
+
+                </table>
+            </div>
+            <div id="logindiv">
+                <h2>Kullanici Giris Formu</h2>
+                <div class="form-group row">
+                    <label class="col-md-3 col-form-label">Email</label>
+                    <div class="col-md-9">
+                        <input type="text" class="form-control" id="txtEmail" />
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-md-3 col-form-label">Parola</label>
+                    <div class="col-md-9">
+                        <input type="text" class="form-control" id="txtParola" />
+                    </div>
+                </div>
+                <div align="right"> <button class="btn btn-primary" id="btnLogin">Giriş Yap</button></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+@section Scripts
+{
+    <script type="text/javascript">
+        $(function () {
+            let accessToken = localStorage.getItem("token");
+            if (accessToken) {
+                getUserData();
+            }
+            $("#btnSave").on('click',
+                () => {
+                    let name = $("#Name").val();
+                    let surname = $("#Surname").val();
+                    let email = $("#Email").val();
+                    let password = $("#Sifre").val();
+                    let user = {
+                        "Name": name,
+                        "Surname": surname,
+                        "Email": email,
+                        "Password": password
+                    }
+                    var url = "https://localhost:44398/api/User";
+                    $.ajax({
+                        type: "POST",
+                        crossDomain: true,
+                        url: url,
+                        data: JSON.stringify(user),
+                        contentType: "application/json",
+                        dataType: "json",
+                        success: function (data) {
+                            console.table(data);
+                        },
+                        error: function (error) {
+                            console.error(error);
+                        }
+                    });
+                });
+            function getUserDataRefreshToken() {
+                let refreshToken = localStorage.getItem("refreshToken");
+                let url = "https://localhost:44398/api/Login/RefreshToken";
+                var data = { 'RefreshToken': refreshToken };
+                $.ajax({
+                    type: 'POST',
+                    url: url,
+                    async: false,
+                    crossDomain: true,
+                    contentType: "application/json",
+                    dataType: "json",
+                    data: JSON.stringify(data),
+                    success: function (data) {
+                        console.log(data);
+                        localStorage.setItem("token", data.token);
+                        localStorage.setItem("refreshToken", data.refreshToken);
+                        getUserData();
+                    },
+                    error: function (error) { }
+                });
+            }
+            function getUserData() {
+                let url = "https://localhost:44398/api/User";
+                let accessToken = localStorage.getItem("token");
+                $.ajax({
+                    type: "GET",
+                    url: url,
+                    contentType: "application/json",
+                    dataType: "json",
+                    async: false,
+                    crossDomain: true,
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+                    },
+                    statusCode: {
+                        401: function () {
+                            getUserDataRefreshToken();
+                        }
+                    },
+                    success: function (data) {
+                        debugger;
+                        console.table(data);
+                        $("#logindiv").hide();
+                        $("#userDiv").attr('style', "display:block");
+                        $("#userData").append(`
+                                       <tr>
+                                       <td>${data.id}</td>
+                                       <td>${data.name}</td>
+                                       <td>${data.surname}</td>
+                                       <td>${data.email}</td>
+                                       </tr>
+                                       `);
+                    },
+                    error: function (error) { }
+
+                });
+            }
+            $("#btnLogin").on('click',
+                () => {
+                    let loginEmail = $("#txtEmail").val();
+                    let loginPassword = $("#txtParola").val();
+
+                    let userLogin = { 'Email': loginEmail, 'Password': loginPassword };
+
+                    let urlLogin = "https://localhost:44398/api/Login/AccessToken";
+                    $.ajax({
+                        type: 'POST',
+                        url: urlLogin,
+                        crossDomain: true,
+                        data: JSON.stringify(userLogin),
+                        contentType: "application/json",
+                        dataType: "json",
+                        success: function (data) {
+                            console.table(data);
+                            localStorage.setItem("token", data.token);
+                            localStorage.setItem("refreshToken", data.refreshToken);
+                            getUserData();
+                        },
+                        error: function (error) {
+                            console.error(error);
+                        }
+                    });
+                });
+        });
+    </script>
+}
